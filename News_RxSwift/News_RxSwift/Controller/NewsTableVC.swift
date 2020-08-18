@@ -15,11 +15,65 @@ class NewsTableVC: UITableViewController {
     
     private let disposeBag = DisposeBag()
     private let newsURL = URL(string: "https://newsapi.org/v2/top-headlines?country=us&apiKey=fe0504e965a0499aa62fb17ebd9571b3")!
+    
+    private var posts = [Article]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
+    
+//        fetchNewsFromAPI()
+        
+        fetchArticlesFromAPI()
+            .subscribe(onNext: { [weak self] result in
+                self?.posts = result.articles
+                self?.tableView.reloadData()
+            }, onError: { error in
+                print(error)
+            }).disposed(by: disposeBag)
+        
+        
     }
     
+    private enum Error: Swift.Error {
+        case invalidResponse(URLResponse?)
+        case invalidJSON(Swift.Error)
+    }
+    
+    //WORKING API CALL AND PARSING
+    func fetchArticlesFromAPI() -> Observable<ArticleList> {
+        let url = newsURL
+        let request = URLRequest(url: url)
+        return URLSession.shared.rx.response(request: request)
+            .map { result -> Data in
+                guard result.response.statusCode == 200 else { throw Error.invalidResponse(result.response) }
+                return result.data
+            }.map { data in
+                do {
+                    let posts = try JSONDecoder().decode(ArticleList.self, from: data)
+                    return posts
+                } catch let error {
+                    throw Error.invalidJSON(error)
+                }
+            }
+            .observeOn(MainScheduler.instance)
+            .asObservable()
+    }
+    
+    private func fetchNewsFromAPI() {
+        Observable.just(newsURL)
+            
+            
+            .map { url -> Observable<Data> in
+                let request = URLRequest(url: url)
+                return URLSession.shared.rx.data(request: request)
+            }
+//        .map { result -> Data in
+//                return try? JSONDecoder().decode([Article].self, from: result)
+//            }
+            .subscribe( onNext: { article in
+                    print(article)
+                }).disposed(by: disposeBag)
+    }
 }
 
 extension NewsTableVC {
@@ -27,7 +81,7 @@ extension NewsTableVC {
 
     override func numberOfSections(in tableView: UITableView) -> Int {
         // #warning Incomplete implementation, return the number of sections
-        return 0
+        return posts.count
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
