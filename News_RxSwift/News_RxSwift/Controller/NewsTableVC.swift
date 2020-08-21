@@ -13,6 +13,7 @@ import RxSwift
 
 class NewsTableVC: UITableViewController {
     
+    
     private let disposeBag = DisposeBag()
     private var posts = [Article]()
 
@@ -20,7 +21,9 @@ class NewsTableVC: UITableViewController {
         super.viewDidLoad()
         
         navigationController?.navigationBar.prefersLargeTitles = true
-        fetchAndLoadNews()
+        //fetchAndLoadNews()
+        fetchAndLoadNewsUsingExtension()
+        
     }
     
     func fetchAndLoadNews() {
@@ -35,6 +38,18 @@ class NewsTableVC: UITableViewController {
         print("Application ready")
     }
     
+    func fetchAndLoadNewsUsingExtension() {
+        
+        URLRequest.load(resource: ArticleList.all)
+            .subscribe( onNext: { [weak self] result in
+                if let result = result {
+                    self?.posts = result.articles
+                    self?.reload()
+                }
+            }).disposed(by: disposeBag)
+        print("Application ready, Fetching news using Generic type")
+
+    }
     
     @IBAction func onReloadTapped(_ sender: Any) {
         fetchAndLoadNews()
