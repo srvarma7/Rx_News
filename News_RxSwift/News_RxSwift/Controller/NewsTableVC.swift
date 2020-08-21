@@ -26,17 +26,17 @@ class NewsTableVC: UITableViewController {
         
     }
     
-    func fetchAndLoadNews() {
-        NewsAPICall.instance.fetchArticlesFromAPI()
-            .subscribe(onNext: { [weak self] result in
-                self?.posts = result.articles
-                self?.reload()
-            }, onError: { error in
-                print(error)
-            }).disposed(by: disposeBag)
-        
-        print("Application ready")
-    }
+//    func fetchAndLoadNews() {
+//        NewsAPICall.instance.fetchArticlesFromAPI()
+//            .subscribe(onNext: { [weak self] result in
+//                self?.posts = result.articles
+//                self?.reload()
+//            }, onError: { error in
+//                print(error)
+//            }).disposed(by: disposeBag)
+//
+//        print("Application ready")
+//    }
     
     func fetchAndLoadNewsUsingExtension() {
         
