@@ -14,19 +14,17 @@ import RxSwift
 class NewsTableVC: UITableViewController {
     
     private let disposeBag = DisposeBag()
-    private let newsURL = URL(string: "https://newsapi.org/v2/top-headlines?country=us&apiKey=fe0504e965a0499aa62fb17ebd9571b3")!
-    
     private var posts = [Article]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        UINavigationItem.LargeTitleDisplayMode.automatic
         navigationController?.navigationBar.prefersLargeTitles = true
-        
-//        fetchNewsFromAPI()
-        
-        fetchArticlesFromAPI()
+        fetchAndLoadNews()
+    }
+    
+    func fetchAndLoadNews() {
+        NewsAPICall.instance.fetchArticlesFromAPI()
             .subscribe(onNext: { [weak self] result in
                 self?.posts = result.articles
                 self?.reload()
@@ -35,50 +33,11 @@ class NewsTableVC: UITableViewController {
             }).disposed(by: disposeBag)
         
         print("Application ready")
-        
     }
     
-    private enum Error: Swift.Error {
-        case invalidResponse(URLResponse?)
-        case invalidJSON(Swift.Error)
-    }
     
-    //WORKING API CALL AND PARSING
-    func fetchArticlesFromAPI() -> Observable<ArticleList> {
-        let url = newsURL
-        let request = URLRequest(url: url)
-        return URLSession.shared.rx.response(request: request)
-            .map { result -> Data in
-                guard result.response.statusCode == 200 else { throw Error.invalidResponse(result.response) }
-                return result.data
-            }.map { data in
-                do {
-                    let posts = try JSONDecoder().decode(ArticleList.self, from: data)
-                    return posts
-                } catch let error {
-                    throw Error.invalidJSON(error)
-                }
-            }
-            .observeOn(MainScheduler.instance)
-            .asObservable()
-    }
-    
-    private func fetchNewsFromAPI() {
-        Observable.just(newsURL)
-            
-            
-            .map { url -> Observable<Data> in
-                let request = URLRequest(url: url)
-                return URLSession.shared.rx.data(request: request)
-            }
-//        .map { result -> Data in
-//                return try? JSONDecoder().decode([Article].self, from: result)
-//            }
-            .subscribe( onNext: { article in
-                    print(article)
-                }).disposed(by: disposeBag)
-    }
     @IBAction func onReloadTapped(_ sender: Any) {
+        fetchAndLoadNews()
         reload()
     }
 }
@@ -124,10 +83,6 @@ extension NewsTableVC {
             })
         }
         
-    }
-    
-    override func tableView(_ tableView: UITableView, shouldSpringLoadRowAt indexPath: IndexPath, with context: UISpringLoadedInteractionContext) -> Bool {
-        return true
     }
 
     /*
