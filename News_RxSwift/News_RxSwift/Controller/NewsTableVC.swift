@@ -20,17 +20,21 @@ class NewsTableVC: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-    
+        
+        UINavigationItem.LargeTitleDisplayMode.automatic
+        navigationController?.navigationBar.prefersLargeTitles = true
+        
 //        fetchNewsFromAPI()
         
         fetchArticlesFromAPI()
             .subscribe(onNext: { [weak self] result in
                 self?.posts = result.articles
-                self?.tableView.reloadData()
+                self?.reload()
             }, onError: { error in
                 print(error)
             }).disposed(by: disposeBag)
         
+        print("Application ready")
         
     }
     
@@ -74,30 +78,57 @@ class NewsTableVC: UITableViewController {
                     print(article)
                 }).disposed(by: disposeBag)
     }
+    @IBAction func onReloadTapped(_ sender: Any) {
+        reload()
+    }
 }
 
 extension NewsTableVC {
+    
+    func reload() {
+        DispatchQueue.main.async {
+            self.tableView.reloadData()
+        }
+    }
+    
     // MARK: - Table view data source
 
-    override func numberOfSections(in tableView: UITableView) -> Int {
-        // #warning Incomplete implementation, return the number of sections
-        return posts.count
-    }
+//    override func numberOfSections(in tableView: UITableView) -> Int {
+//        // #warning Incomplete implementation, return the number of sections
+//        return posts.count
+//    }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // #warning Incomplete implementation, return the number of rows
-        return 0
+        return posts.count
     }
 
-    /*
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "reuseIdentifier", for: indexPath)
+        guard let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath) as? ArticleTableViewCell else { return ArticleTableViewCell() }
+        let article = posts[indexPath.row]
+        cell.updateCell(article)
 
         // Configure the cell...
 
         return cell
     }
-    */
+    
+    override func tableView(_ tableView: UITableView, willDisplay cell: UITableViewCell, forRowAt indexPath: IndexPath) {
+        DispatchQueue.main.async {
+            UIView.animate(
+                withDuration: 1,
+                delay: 0.5 * Double(indexPath.row),
+                animations: {
+                    cell.alpha = 1
+            })
+        }
+        
+    }
+    
+    override func tableView(_ tableView: UITableView, shouldSpringLoadRowAt indexPath: IndexPath, with context: UISpringLoadedInteractionContext) -> Bool {
+        return true
+    }
 
     /*
     // Override to support conditional editing of the table view.
